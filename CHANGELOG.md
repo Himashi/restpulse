@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## 3.2.0
+
+### Added
+- Automatic retry and exponential backoff strategy for transient 5xx errors and network/timeout failures in both sync and async clients.
+
+## 3.1.0
+
+### Added
+- **Community Standards:** Added a comprehensive `CONTRIBUTING.md` guide to assist developers with environment setup, running tests, and submitting pull requests.
+- **Open Source License:** Added the MIT License to give clear legal permissions for users and contributors.
+
 ## 3.0.0
 
 ### Added
