@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 3.0.0
+
+### Added
+- **Automatic Retries:** Added built-in retry logic with exponential backoff for synchronous and asynchronous requests to handle flaky network issues and temporary 5xx server errors.
+- **Configurable Retry Parameters:** Introduced `retries` and `backoff_factor` configuration options in `RestPulseClient`.
+- **Retry Unit Tests:** Added mock tests verifying successful recovery after initial server error responses.
+
 ## 2.0.0
 
 ### Added
