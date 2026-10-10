@@ -40,11 +40,16 @@ class RestPulseClient:
             for attempt in range(1, self.retries + 1):
                 try:
                     response = client.get(url, params=params)
+                    
+                    # If server error (5xx) and we have retries left, retry
                     if response.status_code >= 500 and attempt < self.retries:
                         time.sleep(self.backoff_factor * (2 ** (attempt - 1)))
                         continue
+                    
+                    # Will raise HTTPStatusError for 4xx/5xx if not retried
                     response.raise_for_status()
                     break
+                    
                 except (httpx.TransportError, httpx.TimeoutException):
                     if attempt == self.retries:
                         raise
@@ -70,11 +75,15 @@ class RestPulseClient:
             for attempt in range(1, self.retries + 1):
                 try:
                     response = await client.get(url, params=params)
+                    
+                    # If server error (5xx) and we have retries left, retry
                     if response.status_code >= 500 and attempt < self.retries:
                         await asyncio.sleep(self.backoff_factor * (2 ** (attempt - 1)))
                         continue
+                        
                     response.raise_for_status()
                     break
+                    
                 except (httpx.TransportError, httpx.TimeoutException):
                     if attempt == self.retries:
                         raise
