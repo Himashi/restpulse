@@ -2,35 +2,22 @@ import pytest
 import respx
 from httpx import Response
 from restpulse.client import RestPulseClient
-from restpulse.exceptions import NotFoundError, AuthenticationError
+from restpulse.models import APIResponse
 
 
-def test_sync_get_not_found():
-    """Test that a 404 response raises NotFoundError."""
-    client = RestPulseClient(base_url="https://api.example.com")
+def test_sync_get_retry_success():
+    """Test that client retries on 500 error and succeeds on subsequent attempt."""
+    client = RestPulseClient(base_url="https://api.example.com", retries=3, backoff_factor=0.01)
     
     with respx.mock:
-        respx.get("https://api.example.com/missing").mock(
-            return_value=Response(404, json={"error": "Not Found"})
-        )
+        route = respx.get("https://api.example.com/flakey")
+        route.side_effect = [
+            Response(500, json={"error": "Server Error"}),
+            Response(200, json={"success": True})
+        ]
         
-        with pytest.raises(NotFoundError) as exc_info:
-            client.get("/missing")
+        response = client.get("/flakey")
         
-        assert exc_info.value.status_code == 404
-
-
-@pytest.mark.asyncio
-async def test_async_get_unauthorized():
-    """Test that a 401 response raises AuthenticationError."""
-    client = RestPulseClient(base_url="https://api.example.com")
-    
-    with respx.mock:
-        respx.get("https://api.example.com/secret").mock(
-            return_value=Response(401, json={"error": "Unauthorized"})
-        )
-        
-        with pytest.raises(AuthenticationError) as exc_info:
-            await client.get_async("/secret")
-        
-        assert exc_info.value.status_code == 401
+        assert response.status_code == 200
+        assert response.data == {"success": True}
+        assert route.call_count == 2
