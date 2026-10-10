@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2.0.0
+
+### Added
+- **Custom Exceptions:** Introduced a structured error hierarchy (`RestPulseError`, `APIError`, `NotFoundError`, `AuthenticationError`) for easier debugging and cleaner integration.
+- **Automatic Error Translation:** Automatically intercepts `httpx.HTTPStatusError` and maps status codes (like `401 Unauthorized` and `404 Not Found`) to their respective custom exceptions.
+- **Exception Unit Tests:** Added robust mock tests verifying that `NotFoundError` and `AuthenticationError` are raised correctly during sync and async requests.
+
 ## 1.0.0
 
 ### Added
