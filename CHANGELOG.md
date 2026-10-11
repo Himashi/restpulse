@@ -7,7 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - **Circuit Breaker Middleware:** Introduced `CircuitBreakerMiddleware` in `restpulse.middleware` to prevent cascading network failures and fail fast when downstream services are unhealthy.
 - **Resilience States:** Implemented standard circuit breaker states (`CLOSED`, `OPEN`, `HALF-OPEN`) with configurable failure thresholds and recovery timeouts, alongside `CircuitOpenError`.
-- **Testing:** Added comprehensive unit tests in `tests/test_circuit_breaker.py` verifying state transitions and fast-fail behavior.
+- **Testing:** Added comprehensive unit tests in `tests/test_circuit_breaker.py` verifying state transitions and fast-fail behavior
 
 ## 5.0.0
 
