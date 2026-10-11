@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 4.1.0
+
+### Added
+- **Multi-Stage CI/CD Pipeline:** Configured sequential GitHub Actions pipeline stages (`test`, `deploy-staging`, and `deploy-production`) to automate testing and release workflows.
+
 ## 4.0.0
 
 ### Added
