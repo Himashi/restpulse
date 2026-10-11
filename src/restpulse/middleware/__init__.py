@@ -1,0 +1,1 @@
+from restpulse.middleware.telemetry import TelemetryMiddleware

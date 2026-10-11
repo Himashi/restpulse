@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 5.0.0
+
+### Added
+- **Telemetry Middleware:** Introduced `TelemetryMiddleware` in `restpulse.middleware` to automatically inject correlation IDs (`X-Request-ID`) for distributed tracing.
+- **Observability:** Added request/response logging capturing precise round-trip latency (in milliseconds), HTTP methods, and status codes.
+- **Testing:** Added comprehensive unit test coverage for telemetry middleware (`tests/test_telemetry.py`).
+
 ## 4.2.0
 
 ### Added
