@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 4.2.0
+
+### Added
+- **Multi-Stage CI/CD Pipeline:** Structured GitHub Actions workflow into 4 distinct sequential stages (`build`, `test`, `dev`, and `prod`) for automated builds, testing, and deployment.
+
 ## 4.1.0
 
 ### Added

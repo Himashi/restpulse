@@ -42,7 +42,7 @@ jobs:
           pytest
 
   # Box 3: Dev / Staging Deployment (Runs after Test passes)
-  dev-staging:
+  dev:
     needs: test
     runs-on: ubuntu-latest
     steps:
@@ -52,7 +52,7 @@ jobs:
 
   # Box 4: Production Deployment (Runs last, usually only on main/release)
   prod:
-    needs: dev-staging
+    needs: dev
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
