@@ -1,18 +1,32 @@
 import time
 import asyncio
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, List, Optional
 import httpx
 from restpulse.models import APIResponse
 from restpulse.exceptions import APIError, AuthenticationError, NotFoundError
 
 class RestPulseClient:
-    """Client for making type-safe REST API requests with automatic retries."""
+    """Client for making type-safe REST API requests with automatic retries and middleware hooks."""
 
     def __init__(self, base_url: str = "", timeout: float = 10.0, retries: int = 3, backoff_factor: float = 0.5):
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         self.retries = max(1, retries)
         self.backoff_factor = backoff_factor
+
+        # Hook registries for middleware
+        self.request_hooks: List[Callable[[Dict[str, Any]], Dict[str, Any]]] = []
+        self.response_hooks: List[Callable[[httpx.Response], httpx.Response]] = []
+
+    def before_request(self, hook: Callable[[Dict[str, Any]], Dict[str, Any]]):
+        """Register a hook to modify or inspect requests before execution."""
+        self.request_hooks.append(hook)
+        return hook
+
+    def after_response(self, hook: Callable[[httpx.Response], httpx.Response]):
+        """Register a hook to process responses globally."""
+        self.response_hooks.append(hook)
+        return hook
 
     def _build_url(self, endpoint: str) -> str:
         endpoint = endpoint.lstrip("/")
@@ -31,22 +45,38 @@ class RestPulseClient:
         else:
             raise APIError(message, status_code, body)
 
-    def get(self, endpoint: str, params: Optional[Dict[str, Any]] = None) -> APIResponse:
-        """Perform a synchronous GET request with retry logic for 5xx errors and network issues."""
+    def get(self, endpoint: str, params: Optional[Dict[str, Any]] = None, headers: Optional[Dict[str, str]] = None) -> APIResponse:
+        """Perform a synchronous GET request with retry logic and middleware hooks."""
         url = self._build_url(endpoint)
+        
+        # Build request context for hooks
+        req_context = {
+            "method": "GET",
+            "url": url,
+            "params": params or {},
+            "headers": headers or {}
+        }
+
+        # Run before_request hooks
+        for hook in self.request_hooks:
+            req_context = hook(req_context)
+
+        url = req_context["url"]
+        params = req_context["params"]
+        req_headers = req_context["headers"]
+
         response = None
+        start_time = time.time()
 
         with httpx.Client(timeout=self.timeout) as client:
             for attempt in range(1, self.retries + 1):
                 try:
-                    response = client.get(url, params=params)
+                    response = client.get(url, params=params, headers=req_headers)
                     
-                    # If server error (5xx) and we have retries left, retry
                     if response.status_code >= 500 and attempt < self.retries:
                         time.sleep(self.backoff_factor * (2 ** (attempt - 1)))
                         continue
                     
-                    # Will raise HTTPStatusError for 4xx/5xx if not retried
                     response.raise_for_status()
                     break
                     
@@ -60,23 +90,47 @@ class RestPulseClient:
                         continue
                     self._handle_error(e)
 
+        # Attach elapsed time metadata
+        response.elapsed_time = time.time() - start_time
+
+        # Run after_response hooks
+        for hook in self.response_hooks:
+            response = hook(response)
+
         return APIResponse(
             status_code=response.status_code,
             data=response.json(),
             headers=dict(response.headers),
         )
 
-    async def get_async(self, endpoint: str, params: Optional[Dict[str, Any]] = None) -> APIResponse:
-        """Perform an asynchronous GET request with retry logic for 5xx errors and network issues."""
+    async def get_async(self, endpoint: str, params: Optional[Dict[str, Any]] = None, headers: Optional[Dict[str, str]] = None) -> APIResponse:
+        """Perform an asynchronous GET request with retry logic and middleware hooks."""
         url = self._build_url(endpoint)
+        
+        # Build request context for hooks
+        req_context = {
+            "method": "GET",
+            "url": url,
+            "params": params or {},
+            "headers": headers or {}
+        }
+
+        # Run before_request hooks
+        for hook in self.request_hooks:
+            req_context = hook(req_context)
+
+        url = req_context["url"]
+        params = req_context["params"]
+        req_headers = req_context["headers"]
+
         response = None
+        start_time = time.time()
 
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             for attempt in range(1, self.retries + 1):
                 try:
-                    response = await client.get(url, params=params)
+                    response = await client.get(url, params=params, headers=req_headers)
                     
-                    # If server error (5xx) and we have retries left, retry
                     if response.status_code >= 500 and attempt < self.retries:
                         await asyncio.sleep(self.backoff_factor * (2 ** (attempt - 1)))
                         continue
@@ -93,6 +147,13 @@ class RestPulseClient:
                         await asyncio.sleep(self.backoff_factor * (2 ** (attempt - 1)))
                         continue
                     self._handle_error(e)
+
+        # Attach elapsed time metadata
+        response.elapsed_time = time.time() - start_time
+
+        # Run after_response hooks
+        for hook in self.response_hooks:
+            response = hook(response)
 
         return APIResponse(
             status_code=response.status_code,
