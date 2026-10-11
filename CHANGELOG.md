@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 4.0.0
+
+### Added
+- **Custom Middleware & Global Hooks:** Introduced `before_request` and `after_response` lifecycle hook decorators to `RestPulseClient` for global request modification and response interception.
+- **Unit Tests:** Added comprehensive test coverage for synchronous hook execution flow in `tests/test_middleware.py`.
+
 ## 3.2.0
 
 ### Added
