@@ -30,13 +30,16 @@ class DataMaskingMiddleware:
             if key.lower() in self.sensitive_keys:
                 request.headers[key] = self.mask_pattern
 
-        # Sanitize body if JSON
+        # Sanitize body if content exists
         if request.content:
             try:
                 body_str = request.content.decode("utf-8")
                 body_data = json.loads(body_str)
                 sanitized_data = self._mask_dict(body_data)
-                request.stream = httpx.ByteStream(json.dumps(sanitized_data).encode("utf-8"))
+                new_content = json.dumps(sanitized_data).encode("utf-8")
+                
+                request._content = new_content
+                request.headers["Content-Length"] = str(len(new_content))
             except (json.JSONDecodeError, UnicodeDecodeError):
                 pass
 
