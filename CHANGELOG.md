@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 11.0.0
+### Added
+- **OpenTelemetry & W3C Trace Context Propagation:** Updated `OpenTelemetryMiddleware` in `src/restpulse/middleware/opentelemetry.py` with full asynchronous support and W3C trace context injection (`traceparent` header propagation).
+- **Distributed Tracing Integration:** Enhanced span attributes, status codes, and exception tracking to seamlessly integrate with enterprise APMs.
+- **Testing:** Converted and updated test suite in `tests/test_opentelemetry.py` to verify asynchronous span creation, trace context headers, and telemetry export.
+
 ## 10.0.0
 ### Added
 - **Smart Connection Pooling & Keep-Alive:** Introduced `ConnectionPoolConfig` in `src/restpulse/config.py` and integrated connection limits, socket reuse, and configurable keep-alive expirations into `RestPulseClient`.

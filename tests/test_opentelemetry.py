@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+import pytest
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
@@ -13,7 +16,8 @@ class MockRequest:
 class MockResponse:
     status_code = 200
 
-def test_opentelemetry_middleware_creates_span():
+@pytest.mark.anyio
+async def test_opentelemetry_middleware_creates_span():
     # Setup in-memory OTel exporter for test verification
     provider = TracerProvider()
     exporter = InMemorySpanExporter()
@@ -23,7 +27,10 @@ def test_opentelemetry_middleware_creates_span():
     middleware = OpenTelemetryMiddleware(tracer_instance=tracer)
     req = MockRequest()
 
-    response = middleware(req, lambda r: MockResponse())
+    async def mock_next(r):
+        return MockResponse()
+
+    response = await middleware(req, mock_next)
 
     spans = exporter.get_finished_spans()
     assert len(spans) == 1
