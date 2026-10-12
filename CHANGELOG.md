@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 9.0.0
+### Added
+- **Data Masking Middleware:** Introduced `DataMaskingMiddleware` in `restpulse.middleware` to automatically sanitize sensitive PII (such as passwords, tokens, SSNs, and credit card numbers) from request bodies, headers, and query payloads.
+- **Compliance Support:** Helps ensure readiness for enterprise compliance standards like SOC2, GDPR, and HIPAA by preventing raw security leaks in payloads.
+- **Testing:** Added comprehensive unit test coverage in `tests/test_data_masking.py` verifying header and JSON body sanitization.
+
 ## 8.0.0
 ### Added
 - **Rate-Limiting Middleware:** Introduced `RateLimitMiddleware` in `restpulse.middleware` to provide client-side throttling and prevent overloading downstream microservices.
