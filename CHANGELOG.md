@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 10.0.0
+### Added
+- **Smart Connection Pooling & Keep-Alive:** Introduced `ConnectionPoolConfig` in `src/restpulse/config.py` and integrated connection limits, socket reuse, and configurable keep-alive expirations into `RestPulseClient`.
+- **Performance Optimization:** Minimized overhead under high-throughput enterprise load by enabling long-lived connection reuse instead of instantiating new clients per request.
+- **Testing:** Added comprehensive test coverage in `tests/test_connection_pooling.py` to verify connection limits and timeout configurations.
+
 ## 9.0.0
 ### Added
 - **Data Masking Middleware:** Introduced `DataMaskingMiddleware` in `restpulse.middleware` to automatically sanitize sensitive PII (such as passwords, tokens, SSNs, and credit card numbers) from request bodies, headers, and query payloads.
