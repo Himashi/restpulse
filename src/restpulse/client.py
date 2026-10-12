@@ -1,18 +1,29 @@
+from __future__ import annotations
+
 import time
 import asyncio
 from typing import Any, Callable, Dict, List, Optional
 import httpx
 from restpulse.models import APIResponse
 from restpulse.exceptions import APIError, AuthenticationError, NotFoundError
+from restpulse.config import ConnectionPoolConfig
 
 class RestPulseClient:
-    """Client for making type-safe REST API requests with automatic retries and middleware hooks."""
+    """Client for making type-safe REST API requests with automatic retries, connection pooling, and middleware hooks."""
 
-    def __init__(self, base_url: str = "", timeout: float = 10.0, retries: int = 3, backoff_factor: float = 0.5):
+    def __init__(
+        self,
+        base_url: str = "",
+        timeout: float = 10.0,
+        retries: int = 3,
+        backoff_factor: float = 0.5,
+        pool_config: ConnectionPoolConfig | None = None,
+    ):
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         self.retries = max(1, retries)
         self.backoff_factor = backoff_factor
+        self.pool_config = pool_config or ConnectionPoolConfig()
 
         # Hook registries for middleware
         self.request_hooks: List[Callable[[Dict[str, Any]], Dict[str, Any]]] = []
@@ -49,7 +60,6 @@ class RestPulseClient:
         """Perform a synchronous GET request with retry logic and middleware hooks."""
         url = self._build_url(endpoint)
         
-        # Build request context for hooks
         req_context = {
             "method": "GET",
             "url": url,
@@ -57,7 +67,6 @@ class RestPulseClient:
             "headers": headers or {}
         }
 
-        # Run before_request hooks
         for hook in self.request_hooks:
             req_context = hook(req_context)
 
@@ -68,7 +77,10 @@ class RestPulseClient:
         response = None
         start_time = time.time()
 
-        with httpx.Client(timeout=self.timeout) as client:
+        limits = self.pool_config.to_limits()
+        timeout_config = self.pool_config.to_timeout()
+
+        with httpx.Client(timeout=timeout_config, limits=limits) as client:
             for attempt in range(1, self.retries + 1):
                 try:
                     response = client.get(url, params=params, headers=req_headers)
@@ -90,10 +102,8 @@ class RestPulseClient:
                         continue
                     self._handle_error(e)
 
-        # Attach elapsed time metadata
         response.elapsed_time = time.time() - start_time
 
-        # Run after_response hooks
         for hook in self.response_hooks:
             response = hook(response)
 
@@ -107,7 +117,6 @@ class RestPulseClient:
         """Perform an asynchronous GET request with retry logic and middleware hooks."""
         url = self._build_url(endpoint)
         
-        # Build request context for hooks
         req_context = {
             "method": "GET",
             "url": url,
@@ -115,7 +124,6 @@ class RestPulseClient:
             "headers": headers or {}
         }
 
-        # Run before_request hooks
         for hook in self.request_hooks:
             req_context = hook(req_context)
 
@@ -126,7 +134,10 @@ class RestPulseClient:
         response = None
         start_time = time.time()
 
-        async with httpx.AsyncClient(timeout=self.timeout) as client:
+        limits = self.pool_config.to_limits()
+        timeout_config = self.pool_config.to_timeout()
+
+        async with httpx.AsyncClient(timeout=timeout_config, limits=limits) as client:
             for attempt in range(1, self.retries + 1):
                 try:
                     response = await client.get(url, params=params, headers=req_headers)
@@ -148,10 +159,8 @@ class RestPulseClient:
                         continue
                     self._handle_error(e)
 
-        # Attach elapsed time metadata
         response.elapsed_time = time.time() - start_time
 
-        # Run after_response hooks
         for hook in self.response_hooks:
             response = hook(response)
 
