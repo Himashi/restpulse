@@ -2,8 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
-## 7.0.0
+## 8.0.0
+### Added
+- **Rate-Limiting Middleware:** Introduced `RateLimitMiddleware` in `restpulse.middleware` to provide client-side throttling and prevent overloading downstream microservices.
+- **Throttling & Backoff:** Added support for configurable request limits, sliding time windows, exponential backoff, and automatic handling of `429 Too Many Requests` responses with `Retry-After` header parsing.
+- **Testing:** Added unit test coverage in `tests/test_rate_limit.py` validating rate enforcement and retry/backoff mechanisms.
 
+## 7.0.0
 ### Added
 - **OpenTelemetry Middleware:** Introduced `OpenTelemetryMiddleware` in `restpulse.middleware` to automatically instrument outgoing requests with distributed tracing spans.
 - **Trace Context Propagation:** Added W3C Trace Context header injection (`traceparent`, `tracestate`) to seamlessly track requests across microservice boundaries.
