@@ -1,5 +1,6 @@
-import time
-from typing import Callable, Any
+from __future__ import annotations
+
+from typing import Callable, Any, Awaitable
 from opentelemetry import trace
 from opentelemetry.trace import Status, StatusCode
 from opentelemetry.propagate import inject
@@ -14,9 +15,13 @@ class OpenTelemetryMiddleware:
     def __init__(self, tracer_instance=None):
         self.tracer = tracer_instance or tracer
 
-    def __call__(self, request: Any, next_call: Callable[[Any], Any]) -> Any:
+    async def __call__(
+        self,
+        request: Any,
+        next_call: Callable[[Any], Awaitable[Any]]
+    ) -> Any:
         method = getattr(request, "method", "GET").upper()
-        url = getattr(request, "url", "unknown")
+        url = str(getattr(request, "url", "unknown"))
         
         span_name = f"HTTP {method}"
 
@@ -25,12 +30,16 @@ class OpenTelemetryMiddleware:
             span.set_attribute("http.method", method)
             span.set_attribute("http.url", url)
 
-            # Inject trace context headers (traceparent) into request if supported
-            if hasattr(request, "headers") and isinstance(request.headers, dict):
-                inject(request.headers)
+            # Inject trace context headers (traceparent) into request headers
+            if hasattr(request, "headers"):
+                # httpx.Headers supports dict-like carrier injection
+                carrier = {}
+                inject(carrier)
+                for key, value in carrier.items():
+                    request.headers[key] = value
 
             try:
-                response = next_call(request)
+                response = await next_call(request)
                 status_code = getattr(response, "status_code", 200)
                 span.set_attribute("http.status_code", status_code)
                 
