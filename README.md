@@ -1,17 +1,18 @@
 # RestPulse 🚀
 
-> A lightweight, type-safe Python REST API client wrapper supporting both synchronous and asynchronous workflows.
+> The resilient, secure, and high-performance Python HTTP client for enterprise-grade applications. Built on top of `httpx`.
 
 ---
 
 ## Features
 
-- **Sync & Async Support**: Built on top of `httpx` for flexible HTTP request handling.
+- **Sync & Async Support**: Built on top of `httpx` for flexible HTTP request handling across synchronous and asynchronous workflows.
+- **Smart Connection Pooling**: Configurable connection limits, keep-alive timeouts, and socket reuse for high-throughput enterprise performance.
+- **Distributed Tracing (OpenTelemetry)**: Native W3C trace context propagation (`traceparent`) for seamless tracing across microservices and enterprise APMs (Datadog, Jaeger, New Relic).
+- **PII Data Masking**: Automatic sanitization and redaction of sensitive data (credentials, credit cards, PII) to support **SOC2, GDPR, and HIPAA compliance**.
+- **Traffic Control & Rate Limiting**: Sliding window rate-limiting and automated `Retry-After` handling to prevent 429 throttling.
+- **Circuit Breaker & Retries**: Automated exponential backoff and circuit breaking to prevent cascading failures during downstream outages.
 - **Data Validation**: Powered by `pydantic` models for structured, type-safe responses.
-- **Environment Driven**: Automatic configuration support via `.env` files using `python-dotenv`.
-- **Developer Friendly**: Fully typed with Python annotations for clean IDE autocompletion.
-- **Automatic Retries**: Built-in exponential backoff retry logic for transient server errors and network failures.
-- **Custom Middleware & Global Hooks**: Intercept and modify requests/responses globally using `before_request` and `after_response` lifecycle hook decorators.
 
 ---
 
@@ -25,24 +26,61 @@ cd restpulse
 pip install -e .[dev]
 ```
 
----
+Environment Setup
 
-## Environment Setup
-
-Create a `.env` file in your project root to set default client configurations:
-
-```env
+Create a .env file in your project root to set default client configurations:
+```bash
 RESTPULSE_BASE_URL=[https://jsonplaceholder.typicode.com](https://jsonplaceholder.typicode.com)
 RESTPULSE_API_KEY=your_optional_api_key
 ```
 
----
+Quickstart Usage
 
-## Quickstart Usage
+Asynchronous Request with Enterprise Features
+```bash
+python
 
-### Synchronous Request
+import asyncio
+from restpulse import RestPulseClient, ConnectionPoolConfig
+from restpulse.middleware import (
+    OpenTelemetryMiddleware,
+    DataMaskingMiddleware,
+    CircuitBreakerMiddleware,
+    RateLimitMiddleware
+)
 
-```python
+async def main():
+    # 1. Configure Connection Pooling
+    pool_config = ConnectionPoolConfig(
+        max_connections=50,
+        max_keepalive_connections=10,
+        keepalive_expiry=5.0
+    )
+
+    # 2. Initialize Client with Enterprise Middlewares
+    client = RestPulseClient(
+        base_url="[https://api.example.com](https://api.example.com)",
+        pool_config=pool_config,
+        middlewares=[
+            OpenTelemetryMiddleware(),
+            DataMaskingMiddleware(),
+            RateLimitMiddleware(max_requests=100, window_seconds=60),
+            CircuitBreakerMiddleware(failure_threshold=5)
+        ]
+    )
+
+    # 3. Execute Async Request
+    response = await client.get_async("/todos/1")
+    print(f"Status: {response.status_code}")
+    print(f"Data: {response.data}")
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+Synchronous Basic Request
+```bash
+python
+
 from restpulse import RestPulseClient
 
 client = RestPulseClient(base_url="[https://jsonplaceholder.typicode.com](https://jsonplaceholder.typicode.com)")
@@ -52,56 +90,15 @@ print(f"Status: {response.status_code}")
 print(f"Data: {response.data}")
 ```
 
-### Asynchronous Request
+##  Running Tests
 
-```python
-import asyncio
-from restpulse import RestPulseClient
-
-async def main():
-    client = RestPulseClient(base_url="[https://jsonplaceholder.typicode.com](https://jsonplaceholder.typicode.com)")
-    response = await client.get_async("/todos/1")
-    print(f"Async Response: {response.data}")
-
-if __name__ == "__main__":
-    asyncio.run(main())
-```
-
-### Custom Middleware & Global Hooks
-You can register global hooks to automatically inject headers (like authorization tokens) or log request metrics across all calls:
-
-```python
-from restpulse import RestPulseClient
-
-client = RestPulseClient(base_url="[https://api.example.com](https://api.example.com)")
-
-# Auto-inject auth header before every request
-@client.before_request
-def add_auth(req):
-    req["headers"]["Authorization"] = "Bearer your_token_here"
-    return req
-
-# Log response metadata after every request
-@client.after_response
-def log_metrics(response):
-    print(f"[{response.status_code}] {response.url} took {response.elapsed_time:.3f}s")
-    return response
-
-response = client.get("/users")
-```
-
----
-
-## Running Tests
-
-Run the test suite using `pytest`:
-
+Run the full test suite using pytest:
 ```bash
 pytest
 ```
+## Contributing
 
----
+We welcome contributions! Please check out our CONTRIBUTING.md guide for details on our development workflow and testing standards.
 
-## License
-
-This project is licensed under the [MIT License](LICENSE).
+##  License
+This project is licensed under the MIT License.
